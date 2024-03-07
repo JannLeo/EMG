@@ -13,6 +13,7 @@
     - <img src="19week_summarize.assets/image-20240229161400683.png" alt="image-20240229161400683" style="zoom:50%;" />
   - Current can never flow into or out of the input terminals. But the Current can flow into or out of the output terminals.
     - <img src="19week_summarize.assets/image-20240229161847988.png" alt="image-20240229161847988" style="zoom:50%;" />
+  
 - The output voltages only are in between the voltages of the two power terminals. As the figure show above, the range of output voltages are from -12V to 12V. 
   - The op amp takes the voltage value of the "+" input and subtracts from it the voltage value of the "-" input.
     
@@ -62,4 +63,24 @@
       V_{output}=(1+\frac{R_2}{R_1}) \times V_{input}
       $$
   
-  - 
+- #### Op amp as adder
+
+  - We use V3, V4 and V5 to simulate the the circuit in parallel connects to inverting input, and the resistance of R1,R2,R3 and R4 are the same. 
+  - <img src="19week_summarize.assets/image-20240306194115017.png" alt="image-20240306194115017" style="zoom:50%;" />
+
+  - Using the Oscilloscope to check the current of R1 and R2. We can observe that the value of A and B are around 3 times related. Thus we can infer the relation as follows:
+
+    - $$
+       V_{output} = -[V_{input1}+V_{input2}+V_{input3}]
+      $$
+
+      
+
+    - <img src="19week_summarize.assets/image-20240306194635895.png" alt="image-20240306194635895" style="zoom:50%;" />
+
+- Plan for Next Week
+  - Numerical insights into EMG’s Instrumentation Amplifier
+  - Understand the principles of high-pass filters
+  - Numerical insights into EMG’s High Pass Filter
+  - Understand the principles of full-wave rectifiers
+  - Numerical insights into EMG’s full-wave rectifiers
