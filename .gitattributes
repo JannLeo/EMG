@@ -1,5 +1,4 @@
 *.rar filter=lfs diff=lfs merge=lfs -text
 *.pdf filter=lfs diff=lfs merge=lfs -text
-学习资料/01-嘉立创EDA-PCB设计零基础入门课程资料（学员专享）/01-PCB基础概念剖析.zip filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
 *.psd filter=lfs diff=lfs merge=lfs -text
