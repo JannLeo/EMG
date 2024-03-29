@@ -26,26 +26,56 @@
 <center><b><font size ='2'>Figure 4 GD32F103Cx Pin Definitions</font></b></center></font>
 
 - 在分析差分放大器如何接入电路之前，我们需要对整个MCU系统进行分析：
-  - 3.3V稳压输出电路分析
-    - 稳压器采用了AMS1117-3.3 这个稳压器选取对于我们的肌电信号能否成功读取有很大关系，因为如果稳压器输出电压值精度不高的话很难侦测到肌电信号，所以我们需要使用电压精度高，电源噪声抑制能力强的稳压芯片。
-    - ![image-20240328205236352](23thweek_summarize.assets/image-20240328205236352.png)
+  - **3.3V稳压输出电路分析：**
 
-<center><b><font size ='2'>Figure 5 3.3V Regulated Output Circuit</font></b></center></font>
+    - 该电路主要用于讲5V输入电压转换成3.3V稳定输出电压。
 
-- 通过查阅AMS1117-3.3datasheet得知（如Figure 6），其最低工作电压差在1V，然而我们的肌电信号通常是在毫伏至微伏变化，即使使用了差分放大器放大200倍也达不到压差1V，所以稳压器的误差产生的电压远比我们要测量的信号大。
+    - AMS1117-3.3datasheet地址：[Microsoft Word - DS1117 (advanced-monolithic.com)](http://www.advanced-monolithic.com/pdf/ds1117.pdf)
 
-  - ![image-20240328210414736](23thweek_summarize.assets/image-20240328210414736.png)
+    - 稳压器采用了AMS1117-3.3 这个稳压器选取对于我们的肌电信号能否成功读取有很大关系，因为如果稳压器输出电压值精度不高的话很难侦测到肌电信号，所以我们从电压精度以及电源噪声抑制能力分析该芯片是否适用于我们的电路。
 
-    <center><b><font size ='2'>Figure 6 Datasheet of the AMS1117-3.3</font></b></center></font>
+    - **电源噪声抑制能力**：查表可得它的RMS Output Noise只有0.003%，那么可得：
 
-  - 我们考虑更换一个稳压芯片,至少要达到如下要求：
+      - $$
+        RMS \  Noise = 0.003 *0.01 *3.3V = 0.000099V = 99uV
+        $$
 
-    - ①工作压差至少要mv级别 
-    - ②噪声水平要尽可能低，在uV级别最好 
-    - ③ 输出电流要在几毫安到几十毫安之间以满足EMG传感器的负载要求。
+      - 由于EMG信号幅度再uV到mV级别，那么还是需要对电源噪声进行一个滤波才能实现比较好的效果。
+
+    - **电压精度**：查表可得AMS1117的输出电压范围再3.201-3.399V范围内，那么也就是有±0.099V的偏差，电压变化分为大约是200mv。
+
+      - 由于电压精度为200mv，那么我们还是需要减少电压的变化范围，为了节约成本，我们选择使用一个小容值的电容来降低高频噪声和大容器电容来稳定电源电压。
+
+    - 接着分析电路：
+
+      ![](23thweek_summarize.assets/image-20240329210136561.png)
+
+      <center><b><font size ='2'>Figure 5 3.3V Regulated Output Circuit</font></b></center></font>
+
+      - VIN_5V：5V电压输入端，输入了一个5V的电压进入AMS1117-3.3
+      - AMS1117-3.3：稳压芯片，输出3.3V电压。
+      - C18:大容值电容，用于稳定电源电压。
+      - C17：小容值电容，用于降低高频噪声。
+      - R5和LED1:用作充当电源指示灯。
+      - VCC_3V3: 输出口，输出3.3V电压。
+
+  - **USB输入模块电路分析：**
+
+    - 该模块主要用于通过Micro输入口提供输入电压。
+
+    - 自恢复保险丝SMD1210P050TF：[Datasheet - LCSC Electronics](https://www.lcsc.com/datasheet/lcsc_datasheet_2208291400_PTTC-Polytronics-Tech-SMD1210P050TF-30_C466600.pdf)
+
+    - U-F-M5DD-Y-1:[Datasheet - LCSC Electronics](https://www.lcsc.com/datasheet/lcsc_datasheet_1811151533_Korean-Hroparts-Elec-U-F-M5DD-Y-1_C91467.pdf)
+
+    - 电路分析：
+
+      - U-F-M5DD-Y-1：Micro USB接口
+      - SMD1210P050TF：用于保持电流处于0.05A-2.0A，此处用于0.5A的过流保护。
+      - D+和D-：差分信号，用于传输数据，减少共模干扰。
+      - C19、C13、C14： 用于滤波。
+
+    - ![image-20240329211000104](23thweek_summarize.assets/image-20240329211000104.png)
+
+      <center><b><font size ='2'>Figure 6 Micro Input Port Circuit</font></b></center></font>
 
   - 
-
-    - 
-
-  - - 
