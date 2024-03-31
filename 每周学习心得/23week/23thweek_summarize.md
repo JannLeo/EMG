@@ -8,9 +8,21 @@
 
 - 根据网络上的芯片产品信息，[GD32F103C8T6-Arm Cortex-M3-兆易创新半导体有限公司 --- GD32F103C8T6-Arm Cortex-M3-GigaDevice Semiconductor Inc.](https://www.gigadevice.com/product/mcu/arm-cortex-m3/gd32f103c8t6)该芯片属于GD32F1系列芯片，其具有以下特点：
   - 基于ARM® Cortex®-M3内核，这种核心专门针对低功耗、实时性和成本效益进行了优化，适用于各种应用，包括汽车、工业控制、消费类电子和医疗设备等。
+  
   - 32位系统，支持最高运行频率为108MHz，提供高达3024KB的片上Flash存储器和高达96KB的SRAM。多种增强型 I/O 端口和片上外设连接到两条 APB 总线。
+  
   - 提供多达 3 个 12 位 1MSPS ADC 和 10 个通用 16 位定时器以及 1 个 PWM 高级定时器，以及标准和高级通信接口。
+  
+    > - The GD32F103xx device incorporates the Arm® Cortex®-M3 32-bit processor core operating
+    >   at 108 MHz frequency with Flash accesses zero wait states to obtain maximum efficiency. It
+    >   provides up to 3 MB on-chip Flash memory and up to 96 KB SRAM memory. An extensive
+    >   range of enhanced I/Os and peripherals connected to two APB buses. The devices offer up
+    >   to three 12-bit ADCs, up to two 12-bit DACs, up to ten general 16-bit timers, two basic timers
+    >   plus two PWM advanced timer, as well as standard and advanced communication interfaces:
+    >   up to three SPIs, two I2Cs, three USARTs, two UARTs, two I2Ss, an USBD, a CAN and a
+    >   SDIO.
 - 如下图所示，根据datasheet里面的图片我们可以确定该芯片是GD32F103的C系列芯片。
+  
   - ![image-20240328193302055](23thweek_summarize.assets/image-20240328193302055.png)
 
 <center><b><font size ='2'>Figure 2 GD32F103Cx LQFP48 pinouts</font></b></center></font>
@@ -26,7 +38,7 @@
 <center><b><font size ='2'>Figure 4 GD32F103Cx Pin Definitions</font></b></center></font>
 
 - 在分析差分放大器如何接入电路之前，我们需要对整个MCU系统进行分析：
-  - **3.3V稳压输出电路分析：**
+  - #### **3.3V稳压输出电路分析：**
 
     - 该电路主要用于讲5V输入电压转换成3.3V稳定输出电压。
 
@@ -59,7 +71,7 @@
       - R5和LED1:用作充当电源指示灯。
       - VCC_3V3: 输出口，输出3.3V电压。
 
-  - **USB输入模块电路分析：**
+  - #### **USB输入模块电路分析：**
 
     - 该模块主要用于通过Micro输入口提供输入电压。
 
@@ -78,4 +90,51 @@
 
       <center><b><font size ='2'>Figure 6 Micro Input Port Circuit</font></b></center></font>
 
-  - 
+  - #### **晶振部分电路分析：**
+
+    - 左边的8MHz晶振电路：
+
+      - C3 和C4：起振电容
+      - X2：用于产生8MHz的电信号频率
+      - R3：**用于消除谐波和一些滤波**
+
+    - 右边的32.768kHz晶振电路：
+
+      - C2和C1：起振电容
+      - X3：用于产生32.768kHz的电信号频率
+      - 为什么没有并联电阻，是因为单片机内部已经集成并联了一颗高阻值电阻。
+
+    - ![image-20240330201111265](23thweek_summarize.assets/image-20240330201111265.png)
+
+      <center><b><font size ='2'>Figure 6 External Crystal Oscillator Circuit</font></b></center></font>
+
+  - #### **复位按键和唤醒按键电路分析：**
+
+    - 复位按键：当单片机接收到低电平（NRST引脚）的时候会复位。
+
+    - C20：用作缓冲，防止电压对单片机造成冲击，在接收到3.3V电压信号时电压不会立刻变化而是呈指数增长形式变到3.3V。
+
+    - TSA063G43-250：[TSA063G43-250 BRIGHT | C294564 - LCSC Electronics](https://www.lcsc.com/product-detail/Tactile-Switches_BRIGHT-TSA063G43-250_C294564.html)就是一个普通的按钮，当按下的时候NRST输入端为低电平，此时会发生复位。
+
+    - ![image-20240330202308942](23thweek_summarize.assets/image-20240330202308942.png)
+
+      <center><b><font size ='2'>Figure 7 Reset Button Circuit</font></b></center></font>
+
+    - 唤醒按键：当TSA063G43-250按键按下时，PA0/WAKEUP输出高电平，此时唤醒系统。
+
+    - ![image-20240330202953411](23thweek_summarize.assets/image-20240330202953411.png)
+
+  - #### **MCU主控部分电路分析**：
+
+    - Pin 1 和 Pin 48：连接着4个电容分别是 C10、C11、C8 和 C9，VCC_3V3提供3.3V电压，然后电容用来滤波降低噪音，最后给MCU供电。
+
+    - Pin 9：通过L1、C7和C6实现LC滤波给VDDA提供模拟电源电压。
+
+    - Pin 23 和 Pin24： VSS_1接GND实现接地功能，VDD_1通过两级滤波与3.3V电压相连提供电压，Pin 36和 Pin35同理。
+
+    - 
+
+    - ![image-20240330194657650](23thweek_summarize.assets/image-20240330194657650.png)
+
+      <center><b><font size ='2'>Figure 7 MCU Minimum System Circuit</font></b></center></font>
+
