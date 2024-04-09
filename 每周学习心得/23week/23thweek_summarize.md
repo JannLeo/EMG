@@ -1,17 +1,17 @@
-## The 23th Week Summarize
+## Summary of the 23rd Week
 
-- This week's goal is to study the circuit design structure and design a circuit suitable for installing a differential amplifier.
-- First we analyse the MCU chip which I used to design the circuit:
-  - <img src="23thweek_summarize.assets/image-20240328191712593.png" alt="image-20240328191712593"  />
-
+- The goal for this week is to analyze the circuit design structure and create a circuit suitable for integrating a differential amplifier.
+- Initially, we examined the MCU chip that was utilized in the circuit design:
+  - ![MCU Minimum System Circuit Image](23thweek_summarize.assets/image-20240328191712593.png)
+  
 <center><b><font size ='2'>Figure 1 MCU Minimum System Circuit</font></b></center></font>
 
-- 根据网络上的芯片产品信息，[GD32F103C8T6-Arm Cortex-M3-兆易创新半导体有限公司 --- GD32F103C8T6-Arm Cortex-M3-GigaDevice Semiconductor Inc.](https://www.gigadevice.com/product/mcu/arm-cortex-m3/gd32f103c8t6)该芯片属于GD32F1系列芯片，其具有以下特点：
-  - 基于ARM® Cortex®-M3内核，这种核心专门针对低功耗、实时性和成本效益进行了优化，适用于各种应用，包括汽车、工业控制、消费类电子和医疗设备等。
+- According to the chip specifications found online, [GD32F103C8T6-Arm Cortex-M3-GigaDevice Semiconductor Inc.](https://www.gigadevice.com/product/mcu/arm-cortex-m3/gd32f103c8t6), this chip belongs to the GD32F1 series and has the following features:
+  - Based on the ARM® Cortex®-M3 core, this core is optimized for low power consumption, real-time performance, and cost-effectiveness, suitable for various applications including automotive, industrial control, consumer electronics, and medical devices.
   
-  - 32位系统，支持最高运行频率为108MHz，提供高达3024KB的片上Flash存储器和高达96KB的SRAM。多种增强型 I/O 端口和片上外设连接到两条 APB 总线。
+  - It is a 32-bit system, supporting a maximum operating frequency of 108MHz, offering up to 3024KB of on-chip Flash memory and up to 96KB of SRAM. Various enhanced I/O ports and on-chip peripherals are connected to two APB buses.
   
-  - 提供多达 3 个 12 位 1MSPS ADC 和 10 个通用 16 位定时器以及 1 个 PWM 高级定时器，以及标准和高级通信接口。
+  - It provides up to 3 12-bit 1MSPS ADCs, 10 general 16-bit timers, and one PWM advanced timer, along with standard and advanced communication interfaces.
   
     > - The GD32F103xx device incorporates the Arm® Cortex®-M3 32-bit processor core operating
     >   at 108 MHz frequency with Flash accesses zero wait states to obtain maximum efficiency. It
@@ -21,121 +21,110 @@
     >   plus two PWM advanced timer, as well as standard and advanced communication interfaces:
     >   up to three SPIs, two I2Cs, three USARTs, two UARTs, two I2Ss, an USBD, a CAN and a
     >   SDIO.
-- 如下图所示，根据datasheet里面的图片我们可以确定该芯片是GD32F103的C系列芯片。
+- As shown in the following image, based on the pinout diagram in the datasheet, we can confirm that this chip belongs to the GD32F103 C-series.
   
-  - ![image-20240328193302055](23thweek_summarize.assets/image-20240328193302055.png)
+  - ![GD32F103Cx LQFP48 Pinouts Image](23thweek_summarize.assets/image-20240328193302055.png)
 
 <center><b><font size ='2'>Figure 2 GD32F103Cx LQFP48 pinouts</font></b></center></font>
 
-- 然后，我们通过分析芯片的Block Diagram可以知道它有三个12位的ADC接口，并且还是每秒百万样本的ADC。因为我们的需求是至少安装两个4通道差分放大器用于测量肌电信号，所以利用每个ADC具有多个通道，我们到时候可以使用多路选择器（MUX）来切换输入信号源，以实现对多个信号的采样。
-  - ![image-20240328193538782](23thweek_summarize.assets/image-20240328193538782.png)
+- Next, by analyzing the Block Diagram of the chip, we can identify that it features three 12-bit ADC interfaces, each capable of sampling one million times per second. As we require at least two 4-channel differential amplifiers for measuring electromyography signals, we can use multiplexers (MUX) with multiple channels per ADC to switch input signal sources and sample multiple signals simultaneously.
+  - ![GD32F103Cx Block Diagram Image](23thweek_summarize.assets/image-20240328193538782.png)
 
 <center><b><font size ='2'>Figure 3 GD32F103Cx Block Diagram</font></b></center></font>
 
-- 根据Figure 4的针脚定义可以看到，我们有总共9个ADC针脚可以使用，所以最多可以同时处理9个差分放大器传输的肌电信号，那么就可以接2个4通道的差分放大器，满足我们的设计要求。
-  - ![image-20240328204225564](23thweek_summarize.assets/image-20240328204225564.png)
+- Referring to the pin definitions in Figure 4, we can see that there are a total of 9 ADC pins available for use. Therefore, we can simultaneously handle signals from up to 9 differential amplifiers, which allows for connecting 2 4-channel differential amplifiers to meet our design requirements.
+  - ![GD32F103Cx LQFP48 Pin Definitions Image](23thweek_summarize.assets/image-20240328204225564.png)
 
-<center><b><font size ='2'>Figure 4 GD32F103Cx Pin Definitions</font></b></center></font>
+<center><b><font size ='2'>Figure 4 GD32F103Cx LQFP48 Pin Definitions</font></b></center></font>
 
-- 在分析差分放大器如何接入电路之前，我们需要对整个MCU系统进行分析：
-  - #### **3.3V稳压输出电路分析：**
+- Prior to analyzing how the differential amplifiers will be integrated into the circuit, it is crucial to perform an analysis of the entire MCU system:
+  - #### **3.3V Regulated Output Circuit Analysis:**
 
-    - 该电路主要用于讲5V输入电压转换成3.3V稳定输出电压。
+    - This circuit's primary function is to convert a 5V input voltage to a stable 3.3V output voltage.
 
-    - AMS1117-3.3datasheet地址：[Microsoft Word - DS1117 (advanced-monolithic.com)](http://www.advanced-monolithic.com/pdf/ds1117.pdf)
+    - AMS1117-3.3 datasheet link: [Microsoft Word - DS1117 (advanced-monolithic.com)](http://www.advanced-monolithic.com/pdf/ds1117.pdf)
 
-    - 稳压器采用了AMS1117-3.3 这个稳压器选取对于我们的肌电信号能否成功读取有很大关系，因为如果稳压器输出电压值精度不高的话很难侦测到肌电信号，所以我们从电压精度以及电源噪声抑制能力分析该芯片是否适用于我们的电路。
+    - The regulator used is the AMS1117-3.3. The choice of this regulator is crucial for successfully reading electromyography signals since low output voltage precision can hinder the detection of such signals. Therefore, we analyze this chip's suitability for our circuit based on voltage precision and power noise suppression capacity.
 
-    - **电源噪声抑制能力**：查表可得它的RMS Output Noise只有0.003%，那么可得：
+    - **Power Noise Suppression Capacity:** By referring to the specifications, the RMS Output Noise is only 0.003%, which translates to:
 
       - $$
         RMS \  Noise = 0.003 *0.01 *3.3V = 0.000099V = 99uV
         $$
 
-      - 由于EMG信号幅度再uV到mV级别，那么还是需要对电源噪声进行一个滤波才能实现比较好的效果。
+      - As the EMG signal amplitudes are in the uV to mV range, filtering of the power noise is still necessary to achieve optimal results.
 
-    - **电压精度**：查表可得AMS1117的输出电压范围再3.201-3.399V范围内，那么也就是有±0.099V的偏差，电压变化分为大约是200mv。
+## 翻译 private_upload\default_user\2024-04-09-21-35-52\23thweek_summarize.md.part-1.md
 
-      - 由于电压精度为200mv，那么我们还是需要减少电压的变化范围，为了节约成本，我们选择使用一个小容值的电容来降低高频噪声和大容器电容来稳定电源电压。
+- **Voltage Accuracy**: Referring to the table, the output voltage range of AMS1117 is within 3.201-3.399V, meaning there is a deviation of ±0.099V, which equates to a voltage variation of approximately 200mV.
+  
+  - Since the voltage accuracy is 200mV, it is necessary to reduce the range of voltage variation. To save costs, a small capacitance capacitor is chosen to reduce high-frequency noise and a large capacitance capacitor is used to stabilize the power supply voltage.
 
-    - 接着分析电路：
+- Next, analyzing the circuit:
 
-      ![](23thweek_summarize.assets/image-20240329210136561.png)
+  ![Figure 5 3.3V Regulated Output Circuit](23thweek_summarize.assets/image-20240329210136561.png)
 
-      <center><b><font size ='2'>Figure 5 3.3V Regulated Output Circuit</font></b></center></font>
+  - VIN_5V: 5V voltage input, supplying a 5V voltage to AMS1117-3.3.
+  - AMS1117-3.3: Voltage regulator chip, outputting 3.3V voltage.
+  - C18: Large capacitance capacitor, used for stabilizing the power supply voltage.
+  - C17: Small capacitance capacitor, used for reducing high-frequency noise.
+  - R5 and LED1: Acting as power indicator lights.
+  - VCC_3V3: Output port, delivering 3.3V voltage.
 
-      - VIN_5V：5V电压输入端，输入了一个5V的电压进入AMS1117-3.3
-      - AMS1117-3.3：稳压芯片，输出3.3V电压。
-      - C18:大容值电容，用于稳定电源电压。
-      - C17：小容值电容，用于降低高频噪声。
-      - R5和LED1:用作充当电源指示灯。
-      - VCC_3V3: 输出口，输出3.3V电压。
+- #### **USB Input Module Circuit Analysis**:
 
-  - #### **USB输入模块电路分析：**
+  - This module is primarily used to provide input voltage via the Micro input port.
+  
+  - Self-recovery fuse SMD1210P050TF: [Datasheet - LCSC Electronics](https://www.lcsc.com/datasheet/lcsc_datasheet_2208291400_PTTC-Polytronics-Tech-SMD1210P050TF-30_C466600.pdf)
+  
+  - U-F-M5DD-Y-1: [Datasheet - LCSC Electronics](https://www.lcsc.com/datasheet/lcsc_datasheet_1811151533_Korean-Hroparts-Elec-U-F-M5DD-Y-1_C91467.pdf)
+  
+  - Circuit Analysis:
+  
+    - U-F-M5DD-Y-1: Micro USB interface
+    - SMD1210P050TF: Used to maintain current within 0.05A-2.0A, here serving as a 0.5A overcurrent protection.
+    - D+ and D-: Differential signals used for data transmission to reduce common-mode interference.
+    - C19, C13, C14: Used for filtering.
+  
+  ![Figure 6 Micro Input Port Circuit](23thweek_summarize.assets/image-20240329211000104.png)
 
-    - 该模块主要用于通过Micro输入口提供输入电压。
+- #### **Crystal Oscillator Circuit Analysis**:
 
-    - 自恢复保险丝SMD1210P050TF：[Datasheet - LCSC Electronics](https://www.lcsc.com/datasheet/lcsc_datasheet_2208291400_PTTC-Polytronics-Tech-SMD1210P050TF-30_C466600.pdf)
+  - Left 8MHz crystal oscillator circuit:
+  
+    - C3 and C4: Matching capacitors that slightly affect the oscillation frequency and waveform.
+    - X2: Generates an 8MHz electrical signal frequency.
+    - R3: Used to eliminate harmonics and some filtering, placing the inverter in the linear operating region during the start of oscillations.
+  
+  - Right 32.768kHz crystal oscillator circuit:
+  
+    - C2 and C1: Startup capacitors.
+    - X3: Generates a 32.768kHz electrical signal frequency.
+    - The reason for not having a parallel resistor is that the microcontroller already integrates a high resistance resistor internally.
+  
+  ![Figure 6 External Crystal Oscillator Circuit](23thweek_summarize.assets/image-20240330201111265.png)
 
-    - U-F-M5DD-Y-1:[Datasheet - LCSC Electronics](https://www.lcsc.com/datasheet/lcsc_datasheet_1811151533_Korean-Hroparts-Elec-U-F-M5DD-Y-1_C91467.pdf)
+- #### **Reset Button and Wakeup Button Circuit Analysis**:
 
-    - 电路分析：
+  - Reset button: When the microcontroller receives a low level (NRST pin), it will reset.
+  
+    - C20: Acts as a buffer to prevent voltage shocks to the microcontroller. When receiving a 3.3V voltage signal, the voltage does not immediately change but grows exponentially to 3.3V.
+    - TSA063G43-250: A regular push button that, when pressed, sets the NRST input to a low level, triggering a reset.
+  
+  ![Figure 7 Reset Button Circuit](23thweek_summarize.assets/image-20240330202308942.png)
 
-      - U-F-M5DD-Y-1：Micro USB接口
-      - SMD1210P050TF：用于保持电流处于0.05A-2.0A，此处用于0.5A的过流保护。
-      - D+和D-：差分信号，用于传输数据，减少共模干扰。
-      - C19、C13、C14： 用于滤波。
+  - Wakeup button: When the TSA063G43-250 button is pressed, PA0/WAKEUP outputs a high level, waking up the system.
+  
+  ![Figure 7 Wakeup Button Circuit](23thweek_summarize.assets/image-20240330202953411.png)
 
-    - ![image-20240329211000104](23thweek_summarize.assets/image-20240329211000104.png)
+- #### **MCU Main Control Circuit Analysis**:
 
-      <center><b><font size ='2'>Figure 6 Micro Input Port Circuit</font></b></center></font>
+  - Pin 1 and Pin 48 are connected to four capacitors: C10, C11, C8, and C9. VCC_3V3 provides 3.3V voltage, and the capacitors are used for filtering to reduce noise before supplying power to the MCU.
+  - Pin 9: Implements LC filtering for VDDA using L1, C7, and C6 to provide analog power voltage.
+  - Pins 23 and 24: VSS_1 is connected to GND to achieve grounding function, VDD_1 is connected to the 3.3V voltage through two-stage filtering to provide voltage. The same applies to Pins 36 and 35.
+  - Pins 32 and 33: When you want to pull up these two pins, solder R14 and R15; when you want to implement IO port function, solder R12 and R10; when you want to implement serial port function, solder R13 and R11.
+  - ![image-20240409213919065](23thWeek_Summarize.assets/image-20240409213919065.png)
 
-  - #### **晶振部分电路分析：**
-
-    - 左边的8MHz晶振电路：
-
-      - C3 和C4：匹配电容，会稍微影响振荡频率和波形。
-      - X2：用于产生8MHz的电信号频率
-      - R3：**用于消除谐波和一些滤波**，使反相器在震荡初始时 处于线性工作区。
-
-    - 右边的32.768kHz晶振电路：
-
-      - C2和C1：起振电容
-      - X3：用于产生32.768kHz的电信号频率
-      - 为什么没有并联电阻，是因为单片机内部已经集成并联了一颗高阻值电阻。
-
-    - ![image-20240330201111265](23thweek_summarize.assets/image-20240330201111265.png)
-
-      <center><b><font size ='2'>Figure 6 External Crystal Oscillator Circuit</font></b></center></font>
-
-  - #### **复位按键和唤醒按键电路分析：**
-
-    - 复位按键：当单片机接收到低电平（NRST引脚）的时候会复位。
-
-    - C20：用作缓冲，防止电压对单片机造成冲击，在接收到3.3V电压信号时电压不会立刻变化而是呈指数增长形式变到3.3V。
-
-    - TSA063G43-250：[TSA063G43-250 BRIGHT | C294564 - LCSC Electronics](https://www.lcsc.com/product-detail/Tactile-Switches_BRIGHT-TSA063G43-250_C294564.html)就是一个普通的按钮，当按下的时候NRST输入端为低电平，此时会发生复位。
-
-    - ![image-20240330202308942](23thweek_summarize.assets/image-20240330202308942.png)
-
-      <center><b><font size ='2'>Figure 7 Reset Button Circuit</font></b></center></font>
-
-    - 唤醒按键：当TSA063G43-250按键按下时，PA0/WAKEUP输出高电平，此时唤醒系统。
-
-    - ![image-20240330202953411](23thweek_summarize.assets/image-20240330202953411.png)
-
-  - #### **MCU主控部分电路分析**：
-
-    - Pin 1 和 Pin 48：连接着4个电容分别是 C10、C11、C8 和 C9，VCC_3V3提供3.3V电压，然后电容用来滤波降低噪音，最后给MCU供电。
-
-    - Pin 9：通过L1、C7和C6实现LC滤波给VDDA提供模拟电源电压。
-
-    - Pin 23 和 Pin24： VSS_1接GND实现接地功能，VDD_1通过两级滤波与3.3V电压相连提供电压，Pin 36和 Pin35同理。
-
-    - Pin 32 和 Pin 33 ：当想让这两个pin口上拉的时候就焊接R14和R15，当想要实现IO口功能的话就焊接R12和R10，当想要实现串口功能就焊接R13 和R11。 
-
-    - ![image-20240330194657650](23thweek_summarize.assets/image-20240330194657650.png)
-
-      <center><b><font size ='2'>Figure 7 MCU Minimum System Circuit</font></b></center></font>
-    
-  - 
+- The Plan of Next Week
+  - Figure out how to connect the AD8619 amplifier with this circuit diagram
+  - Complete the overall PCB design
