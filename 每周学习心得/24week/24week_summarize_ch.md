@@ -8,6 +8,7 @@
 - 在查询了有关AD8619的论文后（[Analog Devices : Healthcare ICs Solutions Bulletin, Volume 11, Issue 2 (psu.edu)](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=67d00a7e2e6b532d7e95d5fb378d8db47219d2c3)）我发现它有提到一点十分重要：
 
   > - The AD8619 quad micropower op amp is a cost efficient option for HRM designs particularly when combined with the AD8235 in-amp and AD7798 ADC. The AD8619 is fully specified to operate from 1.8 V to 5.0 V single supply and combines 22 nV/√Hz noise and 1 pA max input bias current, draws 38 μA of supply current, and is available in 14-lead TSSOP and 14-lead SOIC packages
+
   - 以上说明了除了使用仪表放大器（AD8619），我们还需要前置放大器，因为仪表放大器的放大倍数普遍不高，而诸如EMG信号却仅仅只有uV级别，所以需要AD8235作为差分输入放大器
 
 - 至于是否需要AD7798作为ADC，电路中使用的GD32F103C8T6芯片已经自带了ADC功能，该芯片自带的ADC特性如下图所示：
@@ -23,7 +24,7 @@
     | 采样率     | 12bit        |        |      |
     | 采样速率   | 0.04MSPS     |        |      |
     | 输入范围   | 0-3.6V       |        |      |
-    | 噪声和失真 |              |        |      |
+    | 噪声和失真 | 未提及       |        |      |
     | 电源电压   |              |        |      |
 
     
