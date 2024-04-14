@@ -57,9 +57,18 @@
     >   	Low-side current sense
     >   	Portable electronics
 
-- 
+- 根据以上信息，我们在EDA软件中设计出AD8235的连接图：
 
-- AD8619运算放大器
+  - A1：接入正端电源接口也就是3.3V稳压电源的VCC_3V3
+  - A2：作为关机引脚，连接到+V即可进行正常操作，连接到-V为关闭
+  - A3与D3：作为EMG信号A和信号B输入接口的接收端，由于AD8235是双通道，所以原理上要测多少个位置的肌电信号就需要多少个AD8235，所以这两个口分别对应INPUT_A1,INPUT_A2直到INPUT_D1,INPUT_D2
+  - B1：作为Vout接口连接后续的AD8619的输入端。
+  - B2,D2,C3,B3：暂不设置
+  - D1：连接电源负极
+  - C1：连接参考电压端输入
+  - ![image-20240414010939458](24week_summarize_ch.assets/image-20240414010939458.png)
 
-  - ![image-20240413192930679](24week_summarize_ch.assets/image-20240413192930679.png)
-
+- AD8619的连接图如下图所示：
+  - PA1-PA4：分别连接GD32F103C8T6的ADC相关接口
+  - INPUT_A1,INPUT_A2 - INPUT_D1,INPUT_D2：分别连接AD8235的
+  - ![image-20240414011814375](24week_summarize_ch.assets/image-20240414011814375.png)
