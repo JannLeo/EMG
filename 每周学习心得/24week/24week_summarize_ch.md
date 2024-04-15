@@ -9,7 +9,7 @@
 
   > - The AD8619 quad micropower op amp is a cost efficient option for EMG designs particularly when combined with the AD8235 in-amp and AD7798 ADC. The AD8619 is fully specified to operate from 1.8 V to 5.0 V single supply and combines 22 nV/√Hz noise and 1 pA max input bias current, draws 38 μA of supply current, and is available in 14-lead TSSOP and 14-lead SOIC packages
 
-  - 以上说明了除了使用仪表放大器（AD8619），我们还需要前置放大器，因为仪表放大器的放大倍数普遍不高，而诸如EMG信号却仅仅只有uV级别，所以需要AD8235作为差分输入放大器。
+  - 以上说明了除了使用仪表放大器（AD8619），我们还需要前置放大器，因为仪表放大器的放大倍数普遍不高，而诸如EMG信号却仅仅只有uV级别，所以需要AD8235作为运算放大器。
 
 - 至于是否需要AD7798作为ADC，电路中使用的GD32F103C8T6芯片已经自带了ADC功能，该芯片自带的ADC特性如下图所示：
 
@@ -70,5 +70,17 @@
 
 - AD8619的连接图如下图所示：
   - PA1-PA4：分别连接GD32F103C8T6的ADC相关接口
-  - INPUT_A1,INPUT_A2 - INPUT_D1,INPUT_D2：分别连接AD8235的
-  - ![image-20240414011814375](24week_summarize_ch.assets/image-20240414011814375.png)
+  - Vout1 - Vout4：分别连接不同EMG信号的AD8235的Vout口，作为输入电压。
+  - Vref1 - Vref4 ： 分别连接不同EMG信号的AD8235的REF口，作为参考电压。
+  - VDD：连接3.3V稳压电源接口。
+  - VSS：连接3.3V稳压电源负极。
+  - ![](24week_summarize_ch.assets/image-20240414181536887.png)
+
+- PCB设计完成后，我们接着实现EMG信号模拟
+  - 在查阅网上资料后，我发现可以使用EMG-GAN这个项目去实现EMG信号的模拟与生成。[larocs/EMG-GAN：用于生成 EMG 信号的 GAN --- larocs/EMG-GAN: GANs for generating EMG signals (github.com)](https://github.com/larocs/EMG-GAN)
+  - 但是由于自己的电脑没有GPU，导致不能很好的运行该项目。如果老师能提供学校的有GPU的linux虚拟机的话我可以很快地训练出很多个实验数据，不过好像也没有很有必要哈哈。
+    - ![image-20240414214326939](24week_summarize_ch.assets/image-20240414214326939.png)
+  - 我后来尝试了方案二：也就是使用数据集[尼娜普-DB5 --- Ninapro - DB5 (hevs.ch)](https://ninapro.hevs.ch/instructions/DB5.html)
+    - 该数据集作为一个开源数据集包括 10 名完整受试者重复 52 次手部动作以及休息位置时的表面肌电图和运动学数据。
+    - 我下载了一些这个数据集，发现其是mat文件，可以通过multisim导入进去
+- 到目前为止，我已经完成了初步的PCB的设计和测试数据的获取，接下来我打算先在multisim里面模拟该电路并使用测试数据进行测试，如果可以成功的话我们再接着进行WiFi模块的设计与连接，最后再通过PCB厂商生产出目标PCB再做实物测试这就是我目前的想法。
