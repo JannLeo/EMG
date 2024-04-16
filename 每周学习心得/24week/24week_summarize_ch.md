@@ -103,6 +103,6 @@
       <center><b><font size ='2'>Figure 4 EMG-GAN项目报错</font></b></center></font>
   - 我后来尝试了方案二：也就是使用数据集[尼娜普-DB5 --- Ninapro - DB5 (hevs.ch)](https://ninapro.hevs.ch/instructions/DB5.html)
     - 该数据集作为一个开源数据集包括 10 名完整受试者重复 52 次手部动作以及休息位置时的表面肌电图和运动学数据。
-    - 我下载了一些这个数据集，发现其是mat文件，可以通过multisim导入进去
+    - 我下载了一些这个数据集，发现其是mat文件，通过matlab将其转换成csv文件后理论上可以导入到multisim里面作为信号源来模拟测试。
   
 - 到目前为止，我已经完成了初步的PCB的设计和测试数据的获取，接下来我打算先在multisim里面模拟该电路并使用测试数据进行测试，如果可以成功的话我们再接着进行WiFi模块的设计与连接，最后再通过PCB厂商生产出目标PCB再做实物测试这就是我目前的想法。
