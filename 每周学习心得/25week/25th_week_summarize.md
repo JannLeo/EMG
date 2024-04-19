@@ -14,5 +14,8 @@
 
   ![image-20240418230339730](25th_week_summarize.assets/image-20240418230339730.png)
 
-- 接着我们实现我们的电路，首先
+- 在研究如何实现放大电路时，我发现了一个有关EMG的文献综述：[肌电信号采集与处理综述——PMC --- Review on electromyography signal acquisition and processing - PMC (nih.gov)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7755956/)
+
+  - 通过阅读这篇论文，我知道了
+  - ![image-20240419211111536](25th_week_summarize.assets/image-20240419211111536.png)
 
