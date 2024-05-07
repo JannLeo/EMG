@@ -16,6 +16,15 @@
 
 - 在研究如何实现放大电路时，我发现了一个有关EMG的文献综述：[肌电信号采集与处理综述——PMC --- Review on electromyography signal acquisition and processing - PMC (nih.gov)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7755956/)
 
-  - 通过阅读这篇论文，我知道了
-  - ![image-20240419211111536](25th_week_summarize.assets/image-20240419211111536.png)
+  - 通过阅读这篇论文，我知道了要设计出来低成本EMG传感器，我们除了需要设计放大电路，还需要设计滤波器和整流器，但是我们的计划是通过原始信号传输给电脑然后使用Matlab进行处理，那么主要任务可能就是如何使用matlab对信号进行滤波，与设计PCB电路的任务并列。
+  
+    > - For portable EMG systems, MyoWare is the best sensor available in the market. For accurate results, MyoWare sensors are preferred over low-cost sensors. Filters and rectifiers need to be added before amplification if MyoWare is not used.
+  
+- 根据MyoWare1.0的电路图，我们想要得到Raw EMG output，只需要实现instrumentation amplifier就可以了
+
+  - ![image-20240218195312806](25th_week_summarize.assets/image-20240218195312806.png)
+
+- 按照我的PCB电路设计，我计划用4通道的AD8619运放来驱动4个AD8235单通道低功耗仪器放大器，但是后来发现matlab也可以实现像AD8619的缓冲器的功能，所以只需要AD8235来实现放大即可，但是AD8235是单通道的仪表放大器，所以考虑重新选择适合的多通道仪表放大器。
+
+- 
 
