@@ -66,7 +66,7 @@ int timezoneOffset = 0; //The hours offset from UTC (Mountain time is -6 for day
 SoftwareSerial WiFiSerial(RX1,TX1); //Configure SoftwareSerial
 
 // 目标服务器的IP地址和端口
-String serverIP = "192.168.50.135";
+String serverIP = "192.168.114.135";
 int serverPort = 8080;
 
 void setup() 
@@ -230,6 +230,48 @@ void setup()
         Serial.print(msg);
         if(msg.length() > 1) break;
       }  
+      // 建立TCP连接  用于传输数据
+      Serial.println("Establishing TCP connection...");
+      // 等待模块就绪
+      // while(!WiFiSerial.available());
+      //Wait for "OK" response
+      
+      Serial.println("Sending:AT+NCTCP=TCP,"+String(serverIP) + "," + String(serverPort));
+      // Establish TCP connection to the server
+      WiFiSerial.println("AT+NCTCP=TCP," + String(serverIP) + "," + serverPort);
+      //Wait for "OK" response
+      while(1)
+      {
+        String msg = "";
+        while(WiFiSerial.available())
+        {
+          msg += char(WiFiSerial.read());
+          delay(1);
+        }
+        Serial.print(msg);
+        if(msg.length() > 1) break;
+      }  
+      Serial.println("Sending:AT+CIPSEND");
+      WiFiSerial.println("AT+CIPSEND"); // 准备发送数据
+      
+      while(1)
+      {
+        String msg = "";
+        while(WiFiSerial.available())
+        {
+          msg += char(WiFiSerial.read());
+          delay(1);
+        }
+
+        if(msg.length() > 10) 
+        {
+          Serial.print("Response:");
+          Serial.println(msg);
+          break;
+        }
+      }
+      String msg = "";
+      Serial.println("Waiting for connection response...");
   }
   else
   {
@@ -239,20 +281,36 @@ void setup()
   }
   while (!Serial); // optionally wait for serial terminal to open
 
-  // 建立TCP连接  用于传输数据
-  establishTCPConnection();
+  
 }
 
 void establishTCPConnection() {
   Serial.println("Establishing TCP connection...");
+  // 等待模块就绪
+  // while(!WiFiSerial.available());
+  //Wait for "OK" response
   
+  Serial.println("Sending:AT+CGACT=1,1"+String(serverIP)+ "," + String(serverPort));
   // Establish TCP connection to the server
-  WiFiSerial.println("AT+NCTCP=" + serverIP + "," + String(serverPort));
-  String msg = "";
-  Serial.println("Waiting for connection response...");
+  WiFiSerial.println("AT+NCTCP=\"TCP\",\"" + serverIP + "\"," + String(serverPort));
+  //Wait for "OK" response
   while(1)
   {
-    msg = "";
+    String msg = "";
+    while(WiFiSerial.available())
+    {
+      msg += char(WiFiSerial.read());
+      delay(1);
+    }
+    Serial.print(msg);
+    if(msg.length() > 1) break;
+  }  
+  Serial.println("Sending:AT+CIPSEND");
+  WiFiSerial.println("AT+CIPSEND"); // 准备发送数据
+  
+  while(1)
+  {
+    String msg = "";
     while(WiFiSerial.available())
     {
       msg += char(WiFiSerial.read());
@@ -266,7 +324,8 @@ void establishTCPConnection() {
       break;
     }
   }
-
+  String msg = "";
+  Serial.println("Waiting for connection response...");
 }
 
 void sendSensorValue(int value) {
