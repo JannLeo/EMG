@@ -52,308 +52,169 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
-#include<SoftwareSerial.h>
+#include <SoftwareSerial.h>
 
 #define RX1 8
 #define TX1 9
 #define RTC_PWR_KEY 4
 #define SOFTWARE_WIFISERIAL_BAUD 115200
 #define SOFTWARE_SERIAL_BAUD 9600
+#define LOCAL_PORT 1230
 
 String wifiSSID = "jannleoo";
 String wifiPass = "00000000";
-int timezoneOffset = 0; //The hours offset from UTC (Mountain time is -6 for daylight savings, and -7 for standard)
-SoftwareSerial WiFiSerial(RX1,TX1); //Configure SoftwareSerial
+int timezoneOffset = 0; //The hours offset from UTC
+SoftwareSerial WiFiSerial(RX1, TX1); // Configure SoftwareSerial
 
-// 目标服务器的IP地址和端口
 String serverIP = "192.168.114.135";
-int serverPort = 8080;
+int serverPort = 13888;
 
-void setup() 
-{
+void setup() {
   Serial.begin(SOFTWARE_SERIAL_BAUD);
-  WiFiSerial.begin(SOFTWARE_WIFISERIAL_BAUD); //Set SoftwareSerial baud
-  //Enable DA16200 Module RTC power block
-  pinMode(RTC_PWR_KEY,OUTPUT);
-  digitalWrite(RTC_PWR_KEY,HIGH);
+  WiFiSerial.begin(SOFTWARE_WIFISERIAL_BAUD); // Set SoftwareSerial baud
+  
+  pinMode(RTC_PWR_KEY, OUTPUT);
+  digitalWrite(RTC_PWR_KEY, HIGH);
   Serial.println("Connecting to WiFi\n");
 
-  //等待WIFI模块的初始化完成并且接收初始化消息
-  //Listen for ready message ("+INIT:DONE")
-  byte count = 0;
+  // Initialize WiFi module
+  if (!initializeWiFiModule()) {
+    Serial.println("Failed to initialize WiFi module");
+    while (1);
+  }
+
+  // Connect to WiFi
+  if (!connectToWiFi()) {
+    Serial.println("Failed to connect to WiFi");
+    while (1);
+  }
+
+  // Establish TCP connection
+  if (!establishTCPConnection()) {
+    Serial.println("Failed to establish TCP connection");
+    while (1);
+  }
+}
+
+bool initializeWiFiModule() {
+  // Listen for ready message ("+INIT:DONE")
   String msg = "";
-  while(count<20)
-  {
-    while(WiFiSerial.available())
-    {
+  byte count = 0;
+  while (count < 20) {
+    while (WiFiSerial.available()) {
       msg += char(WiFiSerial.read());
     }
-    if(msg.length() > 5) break;
+    if (msg.length() > 5) break;
     count++;
     delay(100);
   }
-  msg = msg.substring(3,msg.length()); //Remove NULL,CR,LF characters from response
-  // 异常处理
-  if(msg.length()>5)
-  {
+  msg = msg.substring(3, msg.length()); // Remove NULL, CR, LF characters from response
+  
+  if (msg.length() > 5) {
     Serial.println("Expecting: \"INIT:DONE,(0 or 1)");
     Serial.println("Received: " + msg);
+    return true;
+  } else {
+    Serial.println("Failed to receive initialization message.\nMake sure you're using the correct baud rate.\n");
+    return false;
   }
-  else
-  {
-    Serial.println("Failed to receive initialization message.\n" \
-                   "Make sure you're using the correct baud rate.\n");
-    while(1);
-  }
+}
 
-  // 当初始化完成后设置WIFI模式为STA模式，并且重启模块完成设置
-  //Configure module for STA mode
+bool connectToWiFi() {
   Serial.println("Sending:AT+WFMODE=0");
   WiFiSerial.println("AT+WFMODE=0");
+  if (!waitForResponse("OK")) return false;
 
-  //Wait for "OK" response
-  while(1)
-  {
-    msg = "";
-    while(WiFiSerial.available())
-    {
-      msg += char(WiFiSerial.read());
-      delay(1);
-    }
-    Serial.print(msg);
-    if(msg.length() > 1) break;
-  }
-  // 软复位
-  //Apply a software reset to finish changing the mode
   Serial.println("Sending:AT+RESTART");
   WiFiSerial.println("AT+RESTART");
+  if (!waitForResponse("OK")) return false;
 
-  //Wait for "OK" response
-  while(1)
-  {
-    msg = "";
-    while(WiFiSerial.available())
-    {
-      msg += char(WiFiSerial.read());
-      delay(1);
-    }
-    Serial.print(msg);
-    if(msg.length() > 1) break;
-  }
-
-  //Listen for ready message ("+INIT:DONE") after the reset is finished
-  count = 0;
-  msg = "";
-  while(count<20)
-  {
-    while(WiFiSerial.available())
-    {
+  // Listen for ready message ("+INIT:DONE") after the reset is finished
+  byte count = 0;
+  String msg = "";
+  while (count < 20) {
+    while (WiFiSerial.available()) {
       msg += char(WiFiSerial.read());
     }
-    if(msg.length() > 5) break;
+    if (msg.length() > 5) break;
     count++;
     delay(100);
   }
+  msg = msg.substring(3, msg.length()); // Remove NULL, CR, LF characters from response
 
-  Serial.println(count);
-  Serial.println(msg);
-  msg = msg.substring(3,msg.length()); //Remove NULL,CR,LF characters from response
-
-  if(msg.length()>5)
-  {
+  if (msg.length() > 5) {
     Serial.println("Expecting: \"INIT:DONE,(0 or 1)");
     Serial.println("Received: " + msg);
-  }
-  else
-  {
-    Serial.println("Failed to receive initialization message.\n" \
-                   "Continuing anyway...\n");
+  } else {
+    Serial.println("Failed to receive initialization message.\nContinuing anyway...\n");
   }
 
-  //Connect to WiFi using the provided credentials
+  // Connect to WiFi using the provided credentials
   Serial.println("Sending:AT+WFJAPA=" + wifiSSID + "," + wifiPass);
   WiFiSerial.println("AT+WFJAPA=" + wifiSSID + "," + wifiPass);
 
   Serial.println("Waiting for connection response...");
-  while(1)
-  {
+  while (1) {
     msg = "";
-    while(WiFiSerial.available())
-    {
+    while (WiFiSerial.available()) {
       msg += char(WiFiSerial.read());
       delay(1);
     }
 
-    if(msg.length() > 10) 
-    {
+    if (msg.length() > 10) {
       Serial.print("Response:");
       Serial.println(msg);
       break;
     }
   }
 
-  msg = msg.substring(3,msg.length()); //Remove NULL,CR,LF characters from response
+  msg = msg.substring(3, msg.length()); // Remove NULL, CR, LF characters from response
 
-  //If connection to AP is successful, response will be WFJAP:1,SSID,IP_ADDRESS, or WJAP:0 if failed
-  if(msg.startsWith("WFJAP:1"))
-  {
-      //Talk to NTP server to get the current time, along with how often to get time sync
-      Serial.println("Sending:AT+NWSNTP=1,pool.ntp.org,86400");
-      WiFiSerial.println("AT+NWSNTP=1,pool.ntp.org,86400");
-
-      //Wait for "OK" response
-      while(1)
-      {
-        String msg = "";
-        while(WiFiSerial.available())
-        {
-          msg += char(WiFiSerial.read());
-          delay(1);
-        }
-        Serial.print(msg);
-        if(msg.length() > 1) break;
-      }
-
-      //Provides the correct UTC offset for the current time
-      Serial.println("Sending:AT+TZONE="+String(timezoneOffset*3600));
-      WiFiSerial.println("AT+TZONE="+String(timezoneOffset*3600));
-
-      //Wait for "OK" response
-      while(1)
-      {
-        String msg = "";
-        while(WiFiSerial.available())
-        {
-          msg += char(WiFiSerial.read());
-          delay(1);
-        }
-        Serial.print(msg);
-        if(msg.length() > 1) break;
-      }  
-      // 建立TCP连接  用于传输数据
-      Serial.println("Establishing TCP connection...");
-      // 等待模块就绪
-      // while(!WiFiSerial.available());
-      //Wait for "OK" response
-      
-      Serial.println("Sending:AT+NCTCP=TCP,"+String(serverIP) + "," + String(serverPort));
-      // Establish TCP connection to the server
-      WiFiSerial.println("AT+NCTCP=TCP," + String(serverIP) + "," + serverPort);
-      //Wait for "OK" response
-      while(1)
-      {
-        String msg = "";
-        while(WiFiSerial.available())
-        {
-          msg += char(WiFiSerial.read());
-          delay(1);
-        }
-        Serial.print(msg);
-        if(msg.length() > 1) break;
-      }  
-      Serial.println("Sending:AT+CIPSEND");
-      WiFiSerial.println("AT+CIPSEND"); // 准备发送数据
-      
-      while(1)
-      {
-        String msg = "";
-        while(WiFiSerial.available())
-        {
-          msg += char(WiFiSerial.read());
-          delay(1);
-        }
-
-        if(msg.length() > 10) 
-        {
-          Serial.print("Response:");
-          Serial.println(msg);
-          break;
-        }
-      }
-      String msg = "";
-      Serial.println("Waiting for connection response...");
-  }
-  else
-  {
-    Serial.println("Connection unsucessful :(\n\n" \
-                   "Make sure the WiFi credentials are correct, and the module is in the station mode");
-    while(1);
-  }
-  while (!Serial); // optionally wait for serial terminal to open
-
-  
+  // If connection to AP is successful, response will be WFJAP:1,SSID,IP_ADDRESS, or WFJAP:0 if failed
+  return msg.startsWith("WFJAP:1");
 }
 
-void establishTCPConnection() {
+bool establishTCPConnection() {
   Serial.println("Establishing TCP connection...");
-  // 等待模块就绪
-  // while(!WiFiSerial.available());
-  //Wait for "OK" response
-  
-  Serial.println("Sending:AT+CGACT=1,1"+String(serverIP)+ "," + String(serverPort));
-  // Establish TCP connection to the server
-  WiFiSerial.println("AT+NCTCP=\"TCP\",\"" + serverIP + "\"," + String(serverPort));
-  //Wait for "OK" response
-  while(1)
-  {
-    String msg = "";
-    while(WiFiSerial.available())
-    {
-      msg += char(WiFiSerial.read());
-      delay(1);
-    }
-    Serial.print(msg);
-    if(msg.length() > 1) break;
-  }  
-  Serial.println("Sending:AT+CIPSEND");
-  WiFiSerial.println("AT+CIPSEND"); // 准备发送数据
-  
-  while(1)
-  {
-    String msg = "";
-    while(WiFiSerial.available())
-    {
-      msg += char(WiFiSerial.read());
-      delay(1);
-    }
 
-    if(msg.length() > 10) 
-    {
-      Serial.print("Response:");
-      Serial.println(msg);
-      break;
+  Serial.println("Sending:AT+TRTC=" + String(serverIP) + "," + String(serverPort)+","+String(LOCAL_PORT));
+  WiFiSerial.println("AT+TRTC=" + String(serverIP) + "," + String(serverPort)+","+String(LOCAL_PORT));
+
+  Serial.println("Sending:AT+TRSAVE");
+  WiFiSerial.println("AT+TRSAVE");
+  
+  return waitForResponse("OK");
+}
+
+bool waitForResponse(String expected) {
+  String msg = "";
+  unsigned long start = millis();
+  while (millis() - start < 5000) { // 5 seconds timeout
+    while (WiFiSerial.available()) {
+      msg += char(WiFiSerial.read());
+      delay(1);
+    }
+    if (msg.indexOf(expected) != -1) {
+      Serial.print(msg);
+      return true;
     }
   }
-  String msg = "";
-  Serial.println("Waiting for connection response...");
+  Serial.print(msg);
+  return false;
 }
 
 void sendSensorValue(int value) {
   // Send sensor value
-  String data = String(value);
-  WiFiSerial.print("AT+NSOST=0," + serverIP + "," + String(serverPort) + "," + String(data.length()) + "," + data);
-  // delay(1000); // Adjust this delay if necessary
-
-  Serial.println("Data sent: " + data);
+  WiFiSerial.write(0x1B); // Send ESC character
+  WiFiSerial.print("S10,0,0," + String(value));
+  Serial.println("Data sent: " + String(value));
 }
 
-void loop() 
-{  
+void loop() {  
   int sensorValue = analogRead(A0); // read the input on analog pin A0
-  // Serial.println("Sending:AT+TIME");
   Serial.println(sensorValue); // print out the value you read
-  // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
-  float voltage = sensorValue * (5.0 / 1023.0);
-  // print out the value you read:
-  Serial.println(voltage);
-  // WiFiSerial.println("AT+TIME");
-  sendSensorValue(voltage);
-  while(1);
-  // while(WiFiSerial.available())
-  // {
-  //   Serial.print(char(WiFiSerial.read()));
-  //   delay(1);
-  // }
-  // delay(1000);
+  sendSensorValue(sensorValue);
   delay(50); // to avoid overloading the serial terminal
+  while(1);
 }
+
