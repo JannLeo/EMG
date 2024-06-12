@@ -66,7 +66,7 @@ String wifiPass = "00000000";
 int timezoneOffset = 0; //The hours offset from UTC
 SoftwareSerial WiFiSerial(RX1, TX1); // Configure SoftwareSerial
 
-String serverIP = "192.168.114.135";
+String serverIP = "192.168.204.135";
 int serverPort = 13888;
 
 void setup() {
@@ -94,6 +94,9 @@ void setup() {
     Serial.println("Failed to establish TCP connection");
     while (1);
   }
+
+  
+
 }
 
 bool initializeWiFiModule() {
@@ -186,6 +189,16 @@ bool establishTCPConnection() {
   return waitForResponse("OK");
 }
 
+bool preventDPMmode() {
+  Serial.println("Avoid to enter DPM mode");
+
+  Serial.println("Sending: AT+CLRDPMSLPEXT");
+  WiFiSerial.println("AT+CLRDPMSLPEXT");
+
+  
+  return waitForResponse("OK");
+}
+
 bool waitForResponse(String expected) {
   String msg = "";
   unsigned long start = millis();
@@ -203,18 +216,29 @@ bool waitForResponse(String expected) {
   return false;
 }
 
-void sendSensorValue(int value) {
+bool sendSensorValue(int value) {
   // Send sensor value
+  WiFiSerial.println("AT+MCUWUDONE");
+  // WiFiSerial.println("AT+CLRDPMSLPEXT");
+  // WiFiSerial.println("AT+CIPSEND=0");
   WiFiSerial.write(0x1B); // Send ESC character
-  WiFiSerial.print("S10,0,0," + String(value));
-  Serial.println("Data sent: " + String(value));
+  WiFiSerial.print("S10,0,0," + String(value)+"\r");
+  Serial.println("Data sent: " + String(value)+"\r");
+  // WiFiSerial.println("AT+SETDPMSLTEXT");
+  // AT+SETDPMSLTEXT
+  return waitForResponse("OK");
 }
 
 void loop() {  
   int sensorValue = analogRead(A0); // read the input on analog pin A0
   Serial.println(sensorValue); // print out the value you read
-  sendSensorValue(sensorValue);
-  delay(50); // to avoid overloading the serial terminal
-  while(1);
+  // sendSensorValue(sensorValue);
+
+  // Send data
+  if (!sendSensorValue(sensorValue)) {
+    Serial.println("Failed to send data");
+  }
+  delay(1000); // to avoid overloading the serial terminal
+  // while(1);
 }
 
